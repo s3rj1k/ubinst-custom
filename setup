@@ -1,0 +1,315 @@
+#!/bin/sh
+
+set PATH=/usr/local/bin:/usr/local/sbin:$PATH
+
+# config section
+APACHE_CONF_PATH="/usr/local/etc/apache22/"
+APACHE_DATA_PATH="/usr/local/www/apache22/data/"
+BANDWIDTHD_CONF="/usr/local/bandwidthd/etc/bandwidthd.conf"
+LOADER_CONF="/boot/loader.conf"
+NEWSYSLOG_CONF="/etc/newsyslog.conf"
+PHP_INI="/usr/local/etc/php.ini"
+RC_CONF="/etc/rc.conf"
+RESOLV_CONF="/etc/resolv.conf"
+SYSCTL_CONF="/etc/sysctl.conf"
+SYSLOG_CONF="/etc/syslog.conf"
+UBINST="/tmp/ubinstaller/"
+
+ROUTE_IP="192.168.1.1"
+ROUTE_NETW="192.168.1.0"
+ROUTE_CIDR="24"
+
+EXT_IF='em0'
+EXT_IP='192.168.1.2'
+EXT_MASK='0xffffff00'
+
+LAN_IF='em1'
+
+LAN_IP='10.1.0.1'
+LAN_NETW='10.1.0.0'
+LAN_IP_MAX='10.1.126.255'
+LAN_CIDR='17'
+LAN_MASK='0xffff0000'
+
+LAN_SUB_NETW='10.1.127.0'
+LAN_SUB_CIDR='24'
+
+MYSQL_PASSWD='6HRCdwHzSjit'
+STG_PASS='sSQ0mGRN7L1S'
+RSD_PASS='SrHFdlWd1Woe'
+
+# unpack stargazer and ubilling distributions
+mkdir ${UBINST}
+cp -R ./distfiles/* ${UBINST}
+cp -R ./configs/* ${UBINST}
+cp -R ./autoubupdate.sh ${UBINST}
+cp -R ./krnl_cmpl ${UBINST}
+
+# unpack depended packages
+cp -R ./packages/84/* ${UBINST}
+cd ${UBINST}
+
+# installing pkgs
+pkg_add expat-2.1.0.tbz
+pkg_add bash-4.2.45_1.tbz
+pkg_add sudo-1.8.8.tbz
+pkg_add isc-dhcp42-server-4.2.5.tbz
+#pkg_add apache22-2.2.26.tbz
+pkg_add mysql51-server-5.1.73.tbz
+pkg_add php5-5.4.23.tbz
+pkg_add php5-extensions-1.7.tbz
+pkg_add bandwidthd-2.0.1_6.tbz
+pkg_add softflowd-0.9.8_2.tbz
+pkg_add arping-2.13.tbz
+pkg_add gmake-3.82_1.tbz
+pkg_add portupgrade-2.4.12,2.tbz
+#pkg_add pdnsd-1.2.9a.tbz
+
+# installing stargazer
+tar zxvf stg-2.408.tar.gz
+cd stg-2.408/projects/stargazer/
+./build
+/usr/local/bin/gmake install
+# installing stargazer configurators
+cd ../sgconf
+./build
+/usr/local/bin/gmake
+/usr/local/bin/gmake install
+cd ../sgconf_xml/
+./build
+/usr/local/bin/gmake
+/usr/local/bin/gmake install
+
+# loader.conf
+echo 'autoboot_delay="3"' >> ${LOADER_CONF}
+echo 'cc_htcp_load="YES"' >> ${LOADER_CONF}
+echo 'cc_cubic_load="YES"' >> ${LOADER_CONF}
+echo 'cc_vegas_load="YES"' >> ${LOADER_CONF}
+echo '' >> ${LOADER_CONF}
+
+# sysctl.conf
+echo '' >> ${SYSCTL_CONF}
+echo 'net.inet.tcp.blackhole=2' >> ${SYSCTL_CONF}
+echo 'net.inet.udp.blackhole=1' >> ${SYSCTL_CONF}
+echo 'net.inet.tcp.cc.algorithm=htcp' >> ${SYSCTL_CONF} #sysctl net.inet.tcp.cc.available
+echo 'kern.ipc.somaxconn=8192' >> ${SYSCTL_CONF}
+echo 'net.inet.tcp.rfc1323=1' >> ${SYSCTL_CONF}
+echo 'kern.ipc.maxsockbuf=2097152' >> ${SYSCTL_CONF}
+echo 'kern.ipc.maxsockets=204800' >> ${SYSCTL_CONF}
+echo 'net.inet.tcp.sendspace=16384' >> ${SYSCTL_CONF}
+echo 'net.inet.tcp.recvspace=65535' >> ${SYSCTL_CONF}
+echo 'net.inet.udp.maxdgram=57344' >> ${SYSCTL_CONF}
+echo 'net.local.stream.recvspace=65535' >> ${SYSCTL_CONF}
+echo 'net.local.stream.sendspace=65535' >> ${SYSCTL_CONF}
+echo 'kern.ipc.nmbclusters=65536' >> ${SYSCTL_CONF}
+echo 'net.inet.ip.fw.one_pass=1' >> ${SYSCTL_CONF}
+echo 'net.inet.ip.fastforwarding=1' >> ${SYSCTL_CONF}
+echo 'net.inet.tcp.nolocaltimewait=1' >> ${SYSCTL_CONF}
+echo 'net.inet.ip.portrange.randomized=0' >> ${SYSCTL_CONF}
+echo '' >> ${SYSCTL_CONF}
+
+# rc.conf
+cat ${UBINST}rc.preconf > ${RC_CONF}
+perl -e "s/ROUTE_IP/${ROUTE_IP}/g" -pi ${RC_CONF}
+perl -e "s/ROUTE_NETW/${ROUTE_NETW}/g" -pi ${RC_CONF}
+perl -e "s/ROUTE_CIDR/${ROUTE_CIDR}/g" -pi ${RC_CONF}
+perl -e "s/EXT_IF/${EXT_IF}/g" -pi ${RC_CONF}
+perl -e "s/EXT_IP/${EXT_IP}/g" -pi ${RC_CONF}
+perl -e "s/EXT_MASK/${EXT_MASK}/g" -pi ${RC_CONF}
+perl -e "s/LAN_IF/${LAN_IF}/g" -pi ${RC_CONF}
+perl -e "s/LAN_IP/${LAN_IP}/g" -pi ${RC_CONF}
+perl -e "s/LAN_NETW/${LAN_NETW}/g" -pi ${RC_CONF}
+perl -e "s/LAN_CIDR/${LAN_CIDR}/g" -pi ${RC_CONF}
+perl -e "s/LAN_MASK/${LAN_MASK}/g" -pi ${RC_CONF}
+perl -e "s/LAN_SUB_NETW/${LAN_SUB_NETW}/g" -pi ${RC_CONF}
+perl -e "s/LAN_SUB_CIDR/${LAN_SUB_CIDR}/g" -pi ${RC_CONF}
+
+# firewall.conf
+cp -R ${UBINST}firewall.conf /etc/
+chmod a+x /etc/firewall.conf
+
+# php.ini
+echo 'expose_php = Off' > ${PHP_INI}
+echo 'magic_quotes_gpc = Off' >> ${PHP_INI}
+echo 'magic_quotes_runtime = Off' >> ${PHP_INI}
+echo 'magic_quotes_sybase = Off' >> ${PHP_INI}
+echo 'date.timezone="Europe/Kiev"' >> ${PHP_INI}
+echo 'display_errors = Off' >> ${PHP_INI}
+echo 'display_startup_errors = Off' >> ${PHP_INI}
+echo 'html_errors = Off' >> ${PHP_INI}
+echo 'log_errors = On' >> ${PHP_INI}
+echo 'error_log = /var/log/php_errors.log' >> ${PHP_INI}
+echo 'error_reporting = E_ALL & ~E_DEPRECATED' >> ${PHP_INI}
+echo '' >> ${PHP_INI}
+
+# bandwidthd.conf
+echo 'dev' \"${LAN_IF}\" > ${BANDWIDTHD_CONF}
+echo 'subnet' ${LAN_NETW}\/${LAN_CIDR} >> ${BANDWIDTHD_CONF}
+echo 'output_cdf true' >> ${BANDWIDTHD_CONF}
+echo 'recover_cdf true' >> ${BANDWIDTHD_CONF}
+echo 'graph_cutoff 128' >> ${BANDWIDTHD_CONF}
+echo '' >> ${BANDWIDTHD_CONF}
+
+# syslog.conf
+echo "!dhcpd" >> ${SYSLOG_CONF}
+echo "*.*    /var/log/dhcpd.log" >> ${SYSLOG_CONF}
+touch /var/log/dhcpd.log
+
+# newsyslog.conf
+echo "/var/log/dhcpd.log                         640 7 *   @T00 JC" >> ${NEWSYSLOG_CONF}
+echo "/var/log/mysql.log             mysql:wheel 640 7 100 *    JC" >> ${NEWSYSLOG_CONF}
+echo "/var/log/mysqld-slow-query.log mysql:wheel 640 7 100 *    JC" >> ${NEWSYSLOG_CONF}
+echo "/var/log/stargazer.log                     640 7 *   @T00 JC" >> ${NEWSYSLOG_CONF}
+echo "/var/stargazer/allconnect.log              640 7 *   @T00 JC" >> ${NEWSYSLOG_CONF}
+echo "/var/log/httpd-access.log      www:www     640 7 100 *     J /var/run/httpd.pid 30" >> ${NEWSYSLOG_CONF}
+echo "/var/log/httpd-error.log       www:www     640 7 100 *     J /var/run/httpd.pid 30" >> ${NEWSYSLOG_CONF}
+echo "/var/log/httpd-ssl_request.log www:www     640 7 100 *     J /var/run/httpd.pid 30" >> ${NEWSYSLOG_CONF}
+echo "/var/log/php_errors.log                    640 7 100 @T00 JC" >> ${NEWSYSLOG_CONF}
+
+# sshd_config
+echo '' >> /etc/ssh/sshd_config
+echo 'VersionAddendum OpenSSH' >> /etc/ssh/sshd_config
+echo '' >> /etc/ssh/sshd_config
+
+# robots.txt
+echo 'User-agent: *' > ${APACHE_DATA_PATH}robots.txt
+echo 'Disallow: /' >> ${APACHE_DATA_PATH}robots.txt
+echo '' >> ${APACHE_DATA_PATH}robots.txt
+
+# crontab
+echo '0 */6 * * * mysqldump -uroot -p6HRCdwHzSjit stg | gzip -9 > ${APACHE_DATA_PATH}billing/content/backups/sql/ubilling-db-backup-`date +\%Y-\%m-\%d_\%H-\%M-\%S`.sql.gz' >> /etc/crontab
+
+# profile tweaks
+echo '' >> /etc/profile
+echo 'EDITOR=ee; export EDITOR' >> /etc/profile
+echo '' >> /etc/csh.cshrc
+echo 'setenv EDITOR ee' >> /etc/csh.cshrc
+echo '' >> /usr/lib/Mail.rc
+echo 'set EDITOR=ee' >> /usr/lib/Mail.rc
+echo 'set VISUAL=ee' >> /usr/lib/Mail.rc
+
+# copying prepared configs
+cd ${UBINST}
+cp -R httpd.conf ${APACHE_CONF_PATH}
+cp -R my.cnf /var/db/mysql/
+cp -R stargazer.conf /etc/stargazer/
+#cp -R pdnsd.conf /usr/local/etc/
+cp -R autoubupdate.sh ${APACHE_DATA_PATH}
+cp -R favicon.ico ${APACHE_DATA_PATH}
+
+# Apache SSL - http://how-it.ru/print/41
+mkdir -p ${APACHE_CONF_PATH}sslcerts/
+cp -R ./sslcerts/mysite.crt ${APACHE_CONF_PATH}sslcerts/
+cp -R ./sslcerts/server.pem ${APACHE_CONF_PATH}sslcerts/
+echo '#!/bin/sh' > ${APACHE_CONF_PATH}sslpwd.sh
+echo '/bin/echo "Vufoh2ei"' >> ${APACHE_CONF_PATH}sslpwd.sh
+echo '' >> ${APACHE_CONF_PATH}sslpwd.sh
+
+# pdnsd.conf
+#perl -e "s/LAN_IF/${LAN_IF}/g" -pi /usr/local/etc/pdnsd.conf
+#perl -e "s/LAN_IP/${LAN_IP}/g" -pi /usr/local/etc/pdnsd.conf
+
+# resolv.conf
+#echo 'nameserver 127.0.0.1' > ${RESOLV_CONF}
+echo 'nameserver 77.88.8.8' >> ${RESOLV_CONF}
+echo 'nameserver 8.8.8.8' >> ${RESOLV_CONF}
+echo 'nameserver 4.2.2.2' >> ${RESOLV_CONF}
+
+# start mysql-server
+/usr/local/etc/rc.d/mysql-server onestart
+
+# setting MySQL root password
+mysqladmin -u root password ${MYSQL_PASSWD}
+
+# unpacking ubilling
+cd ${UBINST}
+mkdir ${APACHE_DATA_PATH}billing/
+tar -zxvf ${UBINST}ub.tgz -C ${APACHE_DATA_PATH}billing/
+cp -R ${UBINST}global.template ${APACHE_DATA_PATH}billing/config/dhcp/
+cp -R ${UBINST}subnets.template ${APACHE_DATA_PATH}billing/config/dhcp/
+cp -R ${UBINST}alter.ini ${APACHE_DATA_PATH}billing/config/
+cp -R ${UBINST}ymaps.ini ${APACHE_DATA_PATH}billing/config/
+cp -R ${UBINST}userstats.ini ${APACHE_DATA_PATH}billing/userstats/config/
+chmod -R 777 ${APACHE_DATA_PATH}billing/content/
+chmod -R 777 ${APACHE_DATA_PATH}billing/config/
+chmod -R 777 ${APACHE_DATA_PATH}billing/multinet/
+chmod -R 777 ${APACHE_DATA_PATH}billing/exports/
+chmod -R 777 ${APACHE_DATA_PATH}billing/userstats/config/
+chmod -R 777 ${APACHE_DATA_PATH}billing/remote_nas.conf
+
+# updating passwords and login
+perl -e "s/mylogin/root/g" -pi ${APACHE_DATA_PATH}billing/config/mysql.ini
+perl -e "s/newpassword/${MYSQL_PASSWD}/g" -pi ${APACHE_DATA_PATH}billing/config/mysql.ini
+perl -e "s/mylogin/root/g" -pi ${APACHE_DATA_PATH}billing/userstats/config/mysql.ini
+perl -e "s/newpassword/${MYSQL_PASSWD}/g" -pi ${APACHE_DATA_PATH}billing/userstats/config/mysql.ini
+perl -e "s/LAN_IF/${LAN_IF}/g" -pi ${APACHE_DATA_PATH}billing/config/alter.ini
+perl -e "s/newpassword/${MYSQL_PASSWD}/g" -pi /etc/stargazer/stargazer.conf
+perl -e "s/secretpassword/${RSD_PASS}/g" -pi /etc/stargazer/stargazer.conf
+
+# stargazer rules
+echo 'ALL     0.0.0.0/0          DIR0' > /etc/stargazer/rules
+echo '' >> /etc/stargazer/rules
+
+# starting stargazer for creating DB
+/usr/sbin/stargazer
+# changing default password
+/usr/sbin/sgconf_xml -s localhost -p 5555 -a admin -w 123456 -r " <ChgAdmin Login=\"admin\" password=\"${STG_PASS}\" /> "
+
+# stopping stargazer
+killall stargazer
+
+# restoring ubilling SQL dump
+cat ${APACHE_DATA_PATH}billing/docs/test_dump.sql | /usr/local/bin/mysql -u root  -p stg --password=${MYSQL_PASSWD}
+
+# apply hotfix for stargazer 2.408 and change passwords in configs
+cat ${UBINST}admin_rights_hotfix.sql | /usr/local/bin/mysql -u root  -p stg --password=${MYSQL_PASSWD}
+perl -e "s/123456/${STG_PASS}/g" -pi ${APACHE_DATA_PATH}billing/config/billing.ini
+perl -e "s/123456/${STG_PASS}/g" -pi ${APACHE_DATA_PATH}billing/userstats/config/userstats.ini
+
+# clean default stargazer users and tariffs
+echo "TRUNCATE TABLE users" | /usr/local/bin/mysql -u root  -p stg --password=${MYSQL_PASSWD}
+echo "TRUNCATE TABLE tariffs" | /usr/local/bin/mysql -u root  -p stg --password=${MYSQL_PASSWD}
+
+# restoring ubilling SQL backup
+perl -e "s/LAN_NETW/${LAN_NETW}/g" -pi ${UBINST}ubilling-db-preconf.sql
+perl -e "s/LAN_IP_MAX/${LAN_IP_MAX}/g" -pi ${UBINST}ubilling-db-preconf.sql
+perl -e "s/LAN_CIDR/${LAN_CIDR}/g" -pi ${UBINST}ubilling-db-preconf.sql
+/usr/local/bin/mysql -uroot -p${MYSQL_PASSWD} stg < ${UBINST}ubilling-db-preconf.sql
+/usr/local/bin/mysql -uroot -p${MYSQL_PASSWD} stg < ${UBINST}ubsql.sql
+
+# unpacking start scripts templates
+cp -f ${APACHE_DATA_PATH}billing/docs/presets/FreeBSD/etc/stargazer/* /etc/stargazer/
+chmod a+x /etc/stargazer/*
+
+# changing mysql and interface parameters
+perl -e "s/mylogin/root/g" -pi /etc/stargazer/config
+perl -e "s/newpassword/${MYSQL_PASSWD}/g" -pi /etc/stargazer/config
+perl -e "s/rl0/${LAN_IF}/g" -pi /etc/stargazer/OnConnect
+
+# editing sudoers
+echo "" >> /usr/local/etc/sudoers
+echo "User_Alias BILLING = www" >> /usr/local/etc/sudoers
+echo "BILLING         ALL = NOPASSWD: ALL" >> /usr/local/etc/sudoers
+echo "" >> /usr/local/etc/sudoers
+
+# ugly hack for starting stargazer without NAS-es
+echo "127.0.0.1/32 127.0.0.1" > ${APACHE_DATA_PATH}billing/remote_nas.conf
+
+# symlink magic
+mkdir /etc/stargazer/dn
+chmod -R 777 /etc/stargazer/dn
+ln -fs ${APACHE_DATA_PATH}billing/multinet /usr/local/etc/multinet
+ln -fs ${APACHE_DATA_PATH}billing/remote_nas.conf /etc/stargazer/remote_nas.conf
+ln -fs /etc/stargazer/dn ${APACHE_DATA_PATH}billing/content/dn
+ln -fs /usr/local/bandwidthd/htdocs ${APACHE_DATA_PATH}band
+
+# stargazer rc.script
+cp -R ${UBINST}stargazer /etc/rc.d/
+chmod a+x /etc/rc.d/stargazer
+
+# bandwidthd rc.script
+cp -R ${UBINST}bandwidthd /etc/rc.d/
+chmod a+x /etc/rc.d/bandwidthd
+
+# kernel compile
+sh ${UBINST}krnl_cmpl

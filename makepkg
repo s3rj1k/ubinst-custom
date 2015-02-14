@@ -1,0 +1,18 @@
+#!/bin/sh
+
+chmod a+x ./pkg_create_recurse
+./pkg_create_recurse bash
+./pkg_create_recurse libtool
+./pkg_create_recurse expat
+./pkg_create_recurse gmake
+./pkg_create_recurse sudo
+./pkg_create_recurse isc-dhcp42-server
+#./pkg_create_recurse apache22
+./pkg_create_recurse mysql51-server
+./pkg_create_recurse php5
+./pkg_create_recurse php5-extensions
+./pkg_create_recurse arping
+./pkg_create_recurse bandwidthd
+./pkg_create_recurse softflowd
+./pkg_create_recurse portupgrade
+#./pkg_create_recurse pdnsd

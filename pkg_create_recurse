@@ -1,0 +1,24 @@
+#!/bin/sh
+
+trap "if [ -r .building.name ]; then cat .building.name | sed 's/.*/&.tgz &.tbz &.tar.gz/' | xargs rm -f; fi; exit" int
+
+PKGS=$*
+
+for PKG in $PKGS; do
+FULLNAME=`pkg_info -xE "^$PKG" | head -n 1`
+
+if [ -r $FULLNAME.tgz -o -r $FULLNAME.tbz -o -r $FULLNAME.tar.gz ]; then
+echo "skipping $FULLNAME for $PKG"
+else
+echo -n $FULLNAME > .building.name
+echo "building $FULLNAME for $PKG"
+pkg_create -b $FULLNAME
+rm .building.name
+fi
+
+# rebuild any dependency, even if package exists
+DEPEND=`pkg_info -r $FULLNAME | grep 'Dependency:' | cut -d' ' -f2`
+
+[ -z "$DEPEND" ] || echo "building dependency " $DEPEND
+[ -z "$DEPEND" ] || ./pkg_create_recurse $DEPEND
+done

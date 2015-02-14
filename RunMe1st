@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd ./packages/84/
+pkg_add bash-4.2.45_1.tbz
+cd ../..
+bash ./setup

@@ -1,0 +1,35 @@
+#!/bin/sh
+set PATH=/usr/local/bin:/usr/local/sbin:$PATH
+
+freebsd-update fetch
+freebsd-update install
+
+mkdir -p /usr/src/sys/i386/conf/
+echo 'include GENERIC' > /usr/src/sys/i386/conf/UBNAS
+echo '' >> /usr/src/sys/i386/conf/UBNAS
+echo 'ident	UBNAS' >> /usr/src/sys/i386/conf/UBNAS
+echo '' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options IPFIREWALL' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options IPFIREWALL_DEFAULT_TO_ACCEPT' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options IPFIREWALL_FORWARD' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options IPFIREWALL_VERBOSE' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options IPFIREWALL_VERBOSE_LIMIT=50' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options IPFIREWALL_NAT' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options LIBALIAS' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options ROUTETABLES=2' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options DUMMYNET' >> /usr/src/sys/i386/conf/UBNAS
+echo '#options DEVICE_POLLING' >> /usr/src/sys/i386/conf/UBNAS
+echo 'options HZ="1000"' >> /usr/src/sys/i386/conf/UBNAS
+echo '' >> /usr/src/sys/i386/conf/UBNAS
+
+echo 'WITHOUT_MODULES = sound ntfs fdc cbb pccard cardbus uart ppc ppbus lpt plip ppi vpo puc wlan wlan_wep wlan_ccmp wlan_tkip wlan_amrr an ath ath_hal AH_SUPPORT_AR5416 ath_rate_sample ral wi wl rum uath ural zyd firewire sbp fwe fwip dcons dcons_crom' >> /etc/make.conf
+
+#cp ./configs/usr/src/sys/i386/conf/UBNAS /usr/src/sys/i386/conf/UBNAS
+
+cd /usr/src/sys/i386/conf/
+config UBNAS
+cd ../compile/UBNAS
+make cleandepend
+make depend
+make
+make install

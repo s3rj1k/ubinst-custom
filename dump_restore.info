@@ -1,0 +1,30 @@
+----------------------------------------------------------------------------------
+camcontrol devlist
+gpart list
+umount /dev/ad3s1 && mount_msdosfs -L ru_RU.KOI8-R -D CP932 /dev/ad3s1 /mnt/ad3s1.fat
+dump -C16 -0uanL -f - /mnt/ad0s1a.ufs | gzip -9 > /mnt/ad3s1.fat/ub.dump.gz
+umount /dev/ad3s1
+----------------------------------------------------------------------------------
+#http://www.wonkity.com/~wblock/docs/html/disksetup.html#
+dd if=/dev/zero of=/dev/ad0 bs=512 count=34
+gpart show ad0
+gpart create -s mbr ad0
+gpart bootcode -b /boot/mbr ad0
+gpart add -t freebsd ad0
+gpart set -a active -i 1 ad0
+gpart create -s bsd ad0s1
+gpart bootcode -b /boot/boot ad0s1
+gpart add -t freebsd-ufs -a 4k -s 15G ad0s1
+gpart add -t freebsd-swap -a 4k -s 1G ad0s1
+gpart list ad0s1
+newfs -L rootfs -U /dev/ad0s1a
+glabel label rootfs /dev/ad0s1a
+glabel label swap /dev/ad0s1b
+mkdir /mnt/ad0s1a.ufs && mount /dev/ad0s1a /mnt/ad0s1a.ufs
+gzcat /mnt/da0s1.fat/ub.dump.gz | (cd /mnt/ad0s1a.ufs && restore -ruf -)
+umount /dev/ad0s1a
+----------------------------------------------------------------------------------
+/etc/fstab
+# Device				Mountpoint	FStype	Options	Dump	Pass#
+/dev/label/swap			none		swap	sw		0		0
+/dev/label/rootfs		/			ufs		rw		0		1

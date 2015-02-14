@@ -1,0 +1,5 @@
+subnet {NETWORK} netmask {MASK} {
+ option subnet-mask {MASK};
+ option routers {ROUTERS};
+}
+#include "/usr/local/etc/multinet/{HOSTS}";

@@ -1,0 +1,63 @@
+
+# Enable network daemons for user convenience.
+# Please make all changes to this file, not to /etc/defaults/rc.conf.
+# This file now contains just the overrides from /etc/defaults/rc.conf.
+
+keymap="us.iso"
+fsck_y_enable="YES"
+clear_tmp_enable="YES"
+clear_tmp_X="YES"
+mixer_enable="NO"
+
+hostname="gateway.isp"
+ifconfig_EXT_IF="inet EXT_IP netmask EXT_MASK"
+ifconfig_LAN_IF="inet LAN_IP netmask LAN_MASK"
+
+defaultrouter="ROUTE_IP"
+#static_routes="EXT_IF"
+#route_wan="-net ROUTE_NETW/ROUTE_CIDR ROUTE_IP"
+
+gateway_enable="YES"
+sshd_enable="YES"
+sshd_flags="-p 22"
+syslogd_flags="-s -b 127.0.0.1"
+
+stargazer_enable="YES"
+stargazer_flags="-s -b 127.0.0.1"
+softflowd_enable="YES"
+softflowd_flags="-i LAN_IF -n 127.0.0.1:42111"
+bandwidthd_enable="YES"
+
+ntpdate_enable="YES"
+ntpdate_hosts="0.ua.pool.ntp.org 1.ua.pool.ntp.org 2.ua.pool.ntp.org 3.ua.pool.ntp.org"
+
+sendmail_enable="NONE"
+sendmail_submit_enable="NO"
+sendmail_enable="NO"
+sendmail_outbound_enable="NO"
+sendmail_msp_queue_enable="NO"
+
+mysql_enable="YES"
+mysql_args="--bind-address=127.0.0.1"
+apache22_enable="YES"
+apache22_http_accept_enable="YES"
+apache_flags="-DSSL"
+
+dhcpd_enable="YES"
+dhcpd_flags="-q"
+dhcpd_conf="/usr/local/etc/multinet/dhcpd.conf"
+dhcpd_ifaces="LAN_IF"
+
+firewall_enable="YES"
+firewall_nat_enable="YES"
+dummynet_enable="YES"
+firewall_script="/etc/firewall.conf"
+
+firewall_iif="LAN_IF"
+firewall_inet="LAN_NETW/LAN_CIDR"
+firewall_inet_sub="LAN_SUB_NETW/LAN_SUB_CIDR"
+firewall_iip="LAN_IP"
+
+firewall_oif="EXT_IF"
+firewall_onet="ROUTE_NETW/ROUTE_CIDR"
+firewall_oip="EXT_IP"
